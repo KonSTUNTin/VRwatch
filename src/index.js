@@ -73,10 +73,9 @@ function init() {
 
 
     VRW1 = new VRwatch();
-    scene.add(VRW1);
-    axesHelper = new THREE.AxesHelper( 5 );
-    scene.add( axesHelper );
-   
+    scene.add(VRW1.pivot);
+
+    VRW1.pivot.position.set(0, 1.6, 0);   
 
     raycaster = new THREE.Raycaster();
     // controllers
@@ -88,10 +87,10 @@ function init() {
 
         this.add( buildController( event.data ) );
        
-        controller1.attach(VRW1);
+        // controller1.attach(VRW1);
 
-        VRW1.rotation.x += Math.PI/2
-        VRW1.rotation.y += Math.PI/2
+        // VRW1.rotation.x += Math.PI/2
+        // VRW1.rotation.y += Math.PI/2
     } );
     controller1.addEventListener( 'disconnected', function () {
 
@@ -104,7 +103,6 @@ function init() {
     controller2.addEventListener( 'selectstart', onSelectStart );
     controller2.addEventListener( 'selectend', onSelectEnd );
     controller2.addEventListener( 'connected', function ( event ) {
-        
     
         this.add( buildController( event.data ) );
        
@@ -174,7 +172,7 @@ function handleController( controller ) {
         raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
         raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
        
-        let intersections = raycaster.intersectObjects( VRW1.children, false );
+        let intersections = raycaster.intersectObjects( VRW1.pivot.children, false );
         //console.log(intersections)
         if (intersections.length > 0) {
 
@@ -194,8 +192,8 @@ function animate() {
 }
 
 function render() {
-    axesHelper.position.copy(VRW1.position)
-    axesHelper.rotation.copy(VRW1.rotation)
+    let t = Date.now() / 1000;
+    VRW1.rotateOptions(t)
     handleController(controller2)
     // VRW1.rotation.copy(controller1.rotation);
     renderer.render( scene, camera );
