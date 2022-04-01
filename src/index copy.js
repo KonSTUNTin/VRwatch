@@ -1,16 +1,15 @@
 import * as THREE from 'three'
-import { MeshBasicMaterial } from 'three';
 
 import { BoxLineGeometry } from 'three/examples/jsm/geometries/BoxLineGeometry.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { VRButton } from 'three/examples/jsm/webxr/VRButton.js';
 import { XRControllerModelFactory } from 'three/examples/jsm/webxr/XRControllerModelFactory.js';
+import VRwatch from './VRwatch.js'
 
-let robot = [];
 let camera, scene, renderer;
 let controller1, controller2;
 let controllerGrip1, controllerGrip2;
 let cube;
+let VRW1;
 let room;
 let selected;
 let raycaster;
@@ -35,53 +34,30 @@ function init() {
     blue = new THREE.Color("blue");
 
     scene = new THREE.Scene();
-    //scene.background = new THREE.Color( 0x505050 );
+    scene.background = new THREE.Color( 0x505050 );
 
     camera = new THREE.PerspectiveCamera( 50, window.innerWidth / window.innerHeight, 0.1, 10 );
-    //camera.position.set( 0, 1.6, 3 );
+    camera.position.set( 0, 1.6, 3 );
 
-    // room = new THREE.LineSegments(
-    //     new BoxLineGeometry( 6, 6, 6, 10, 10, 10 ),
-    //     new THREE.LineBasicMaterial( { color: 0x808080 } )
-    // );
-    // room.geometry.translate( 0, 3, 0 );
-    //scene.add( room );
+    room = new THREE.LineSegments(
+        new BoxLineGeometry( 6, 6, 6, 10, 10, 10 ),
+        new THREE.LineBasicMaterial( { color: 0x808080 } )
+    );
+    room.geometry.translate( 0, 3, 0 );
+    scene.add( room );
 
-    //scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) );
+    scene.add( new THREE.HemisphereLight( 0x606060, 0x404040 ) );
 
     const light = new THREE.DirectionalLight( 0xffffff );
     light.position.set( 1, 1, 1 ).normalize();
     scene.add( light );
 
-   
-    
+    cube = new THREE.Mesh(
+        new THREE.BoxGeometry(.1, .1, .1),
+        new THREE.MeshNormalMaterial()
+    ) 
+    scene.add(cube)
 
-    const loader = new GLTFLoader().setPath( './' );
-        loader.load( 'trading.glb', function ( gltf ) {
-
-            gltf.scene.traverse(function(child)
-            {
-                if(child.isMesh){
-                    
-                    console.log(child)
-                    if(child.name.indexOf('robot')>-1){
-                        robot.push(child)
-                    }
-                    let material = new THREE.MeshBasicMaterial({
-                        side: THREE.DoubleSide,
-                        map: child.material.map
-                    })
-                    
-                    child.material = material
-                }
-            }
-            )
-
-            scene.add( gltf.scene );
-
-            //console.log(gltf)
-
-    } );
     //
 
     renderer = new THREE.WebGLRenderer( { antialias: true } );
@@ -94,6 +70,12 @@ function init() {
     //
 
     document.body.appendChild( VRButton.createButton( renderer ) );
+
+
+    VRW1 = new VRwatch();
+    scene.add(VRW1.pivot);
+
+    VRW1.pivot.position.set(0, 1.6, 0);   
 
     raycaster = new THREE.Raycaster();
     // controllers
@@ -185,18 +167,18 @@ function onWindowResize() {
 function handleController( controller ) {
     
     //if ( controller.userData.isSelecting ) {
-        // if(selected)selected.material.color = blue
-        // tempMatrix.identity().extractRotation( controller.matrixWorld );
-        // raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
-        // raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
+        if(selected)selected.material.color = blue
+        tempMatrix.identity().extractRotation( controller.matrixWorld );
+        raycaster.ray.origin.setFromMatrixPosition( controller.matrixWorld );
+        raycaster.ray.direction.set( 0, 0, - 1 ).applyMatrix4( tempMatrix );
        
-        // let intersections = raycaster.intersectObjects( VRW1.pivot.children, false );
+        let intersections = raycaster.intersectObjects( VRW1.pivot.children, false );
         //console.log(intersections)
-        // if (intersections.length > 0) {
+        if (intersections.length > 0) {
 
-        //     selected = intersections[ 0 ].object;
-        //     selected.material.color = new THREE.Color('red');
-        // }
+            selected = intersections[ 0 ].object;
+            selected.material.color = new THREE.Color('red');
+        }
         
 
     //}
@@ -210,14 +192,9 @@ function animate() {
 }
 
 function render() {
-   
-   if(robot.length>0){
-       for(let i =0; i < robot.length; i++){
-        robot[i].rotation.y +=.01
-       }
-      
-   }
-   // handleController(controller2)
+    let t = Date.now() / 1000;
+    VRW1.rotateOptions(t)
+    handleController(controller2)
     // VRW1.rotation.copy(controller1.rotation);
     renderer.render( scene, camera );
 
