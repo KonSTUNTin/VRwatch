@@ -24,7 +24,7 @@ const relativeVelocity = new THREE.Vector3();
 
 const clock = new THREE.Clock();
 
-
+let canvas, ctx, map, screen;
 
 
 init();
@@ -53,8 +53,31 @@ function init() {
     light.position.set( 1, 1, 1 ).normalize();
     scene.add( light );
 
-   
+    let w = 512;
+    canvas = document.createElement('canvas');
+    canvas.width = w;
+    canvas.height = w;
+    ctx = canvas.getContext('2d');
+    ctx.fillStyle = 'red'
+    ctx.textAlign = 'center';
+    ctx.font = '40px arial';
+    let txt = navigator.getGamepads()[0];
+    ctx.fillText(
+        txt,
+        w / 2, w / 2
+    )
+
+    map = new THREE.CanvasTexture(canvas);
+    screen = new THREE.Mesh(
+        new THREE.PlaneGeometry(2, 2, 1 , 1),
+        new THREE.MeshBasicMaterial({
+            map: map,
+            side: THREE.DoubleSide
+        })
+    )
     
+    scene.add(screen)
+    screen.position.z = -1
 
     const loader = new GLTFLoader().setPath( './' );
         loader.load( 'trading.glb', function ( gltf ) {
@@ -77,7 +100,7 @@ function init() {
             }
             )
 
-            scene.add( gltf.scene );
+            //scene.add( gltf.scene );
 
             //console.log(gltf)
 
@@ -217,6 +240,38 @@ function render() {
        }
       
    }
+   ctx.fillStyle = 'black'
+   ctx.fillRect(
+       0 , 0, 512, 512
+   )
+   ctx.fillStyle = 'white'
+   if(renderer.xr.getSession().inputSources){
+       let i = 6
+       ctx.fillText(
+        Math.round(renderer.xr.getSession().inputSources[0].gamepad.axes[2]*10000),
+        128, 256
+        );
+        // ctx.fillText(
+        //     renderer.xr.getSession().inputSources[0].gamepad.buttons[i].touched,
+        //     128, 256
+        // );
+        ctx.fillText(
+            Math.round(renderer.xr.getSession().inputSources[0].gamepad.axes[3]*10000),
+            256, 256
+        );
+        ctx.fillText(
+            Math.round(renderer.xr.getSession().inputSources[0].gamepad.axes[1]*10000),
+            384, 256
+        );
+        // ctx.fillText(
+        //     renderer.xr.getSession().inputSources[0].gamepad.buttons[i].value,
+        //     384, 256
+        // );
+        console.log(renderer.xr.getSession().inputSources[0].gamepad)
+   }
+
+   screen.material.map.needsUpdate = true;
+    
    // handleController(controller2)
     // VRW1.rotation.copy(controller1.rotation);
     renderer.render( scene, camera );
